@@ -1,0 +1,99 @@
+LIBRARY ieee;
+library std;
+USE ieee.std_logic_1164.ALL;
+use ieee.numeric_std.all;
+use ieee.math_real.all; --to perform operation on real variable
+use STD.textio.all; --Dont forget to include this library for file operations.
+
+ENTITY histogram IS
+END histogram;
+
+
+-- In this program if selecting for new image change m=rows, n=columns, g=gray scale, and calculating t(the division part)
+
+
+ARCHITECTURE h_mri OF histogram IS
+    BEGIN
+        process
+        file fp1,fp2 :             text; --file pointer which is a string type
+           variable line_in,line_out :     line; --reads the line number
+        variable line_read:        integer;
+        variable line_write:        integer;
+        variable notendofline:        boolean := false;
+        variable gp,i,j,a,temp:        integer;
+        constant m:            integer := 437;        --change this according to image
+        constant n:            integer := 543;        -- m = rows, n=columns, g=gray levels
+        constant g:            integer := 256;
+        variable count:            integer;
+        type some_array_t is array(integer range <>) of integer;
+        type some_array_t1 is array(integer range <>,integer range <>) of integer;
+        variable h : some_array_t(1 to 256); 
+        variable hc : some_array_t(1 to 256); 
+        variable t : some_array_t(1 to 256);
+        variable t1 : some_array_t1(1 to 437,1 to 543);          --change this when image is changed
+        
+        
+        
+            begin
+                file_open(fp1,"F:\img.txt",READ_MODE);
+                file_open(fp2,"F:\new_img.txt",WRITE_MODE);
+                for i in 1 to g loop
+                    h(i) := 0;
+                    hc(i) := 0;
+                    t(i) := 0;
+                end loop;
+                for i in 1 to m loop
+                    if endfile(fp1) = true then
+                        exit;
+                    end if;
+                    read (line_in,line_read,notendofline);    --to prevent repeated entry of last pixel
+                    for j in 1 to n loop
+                        if( notendofline = false) then
+                            readline (fp1,line_in);        
+                        end if;
+                        read (line_in,line_read,notendofline);
+                        if line_read = 32 then
+                            next;
+                        end if;
+                        gp := line_read;
+                        t1(i,j) := gp;
+                        temp := h(gp+1) + 1;
+                        h(gp+1) := temp;
+                    end loop;
+                end loop;
+                hc(1) := h(1);
+                for i in 2 to g loop
+                    hc(i) := hc(i-1) + h(i);
+                end loop;
+                
+                for i in 1 to g loop
+                    a := 0;
+                    count := 0;
+                    for j in 1 to (g-1) loop
+                        a := a + hc(i);
+                    end loop;
+                    while a > 237291 loop        --change the value = m*n
+                        a := a-237291;
+                        count:= count + 1;
+                    end loop;
+                    if a >= 118645 then        --value should be (m*n)/2
+                        count := count +1;
+                    end if;
+                    a := count;
+                    t(i) := a;
+                end loop;
+
+                for i in 1 to m loop
+                    for j in 1 to n loop
+                        gp := t1(i,j);
+                        line_write  := t(gp + 1);
+                        write(line_out,line_write);    
+                        write(line_out,' ');
+                    end loop;
+                    writeline(fp2,line_out);
+                end loop;
+                file_close(fp1);
+                file_close(fp2);
+                wait;
+        end process;
+end h_mri;
