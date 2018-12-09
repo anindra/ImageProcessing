@@ -1,0 +1,61 @@
+LIBRARY ieee;
+library std;
+USE ieee.std_logic_1164.ALL;
+use ieee.numeric_std.all;
+use ieee.math_real.all; --to perform operation on real variable
+use STD.textio.all; --Dont forget to include this library for file operations.
+
+ENTITY inc_contrast_image IS
+END inc_contrast_image;
+
+ARCHITECTURE mri OF inc_contrast_image IS
+    BEGIN
+        process
+        file fp1,fp2 :             text; --file pointer which is a string type
+           variable line_in,line_out :     line; --reads the line number
+           variable b :             real ; 
+        constant alpha :         real :=0.9 ;            --range between 1.0 to 3.0
+        constant beta :         real :=50.0;            --range between 0.0 to 100.0
+        variable line_read:         integer;
+        variable counter:         integer := 0;
+        variable len:             integer := 1;
+            variable power:           integer := 1;
+            variable index :          integer := 10;
+        variable num,i:         integer;
+        variable c:             character;
+        variable counter1:         integer := 0;
+        variable notendofline :     boolean;
+        
+        
+            begin
+                file_open(fp1,"F:\img.txt",READ_MODE);
+                file_open(fp2,"F:\new_img.txt",WRITE_MODE);   
+                while not endfile(fp1) loop
+                    readline (fp1,line_in);
+                    read (line_in,line_read,notendofline);
+                    while  (notendofline) loop
+                        if(line_read = 32) then
+                            next;
+                        end if;
+                        b := 0.0;
+                        for i in 1 to line_read loop
+                            b := b + alpha;
+                        end loop;
+                        b := b+beta;        -- b := (line_read + alpha) + beta);
+                        b := ROUND(b);
+                        if(b > 255.0) then
+                            b :=255.0;
+                        elsif (b < 0.0) then
+                            b := 0.0; 
+                        end if;
+                        write(line_out,b);
+                        write(line_out,' ');
+                        read (line_in,line_read,notendofline);
+                    end loop;
+                    writeline(fp2,line_out);
+                end loop;
+                file_close(fp1);
+                file_close(fp2);
+                wait;
+        end process;
+end mri;
